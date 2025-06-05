@@ -9,14 +9,8 @@ import Reportes from './pages/Reportes';
 import Historial from './pages/Historial';
 import Configuracion from './pages/Configuracion';
 import NotFound from './pages/NotFound';
-import { initDB } from './database/db';
 
 function App() {
-  // Inicializar la base de datos al cargar la aplicación
-  React.useEffect(() => {
-    initDB();
-  }, []);
-
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
