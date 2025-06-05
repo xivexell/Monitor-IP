@@ -30,7 +30,7 @@ export interface ConfiguracionApp {
   sidebarExpandido: boolean;
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 class Database {
   // Dispositivos
@@ -74,10 +74,26 @@ class Database {
   }
 
   // Registros Ping
-  async getRegistrosPing(dispositivoId: number): Promise<RegistroPing[]> {
-    const response = await fetch(`${API_URL}/registros/${dispositivoId}`);
+  async getRegistrosPing(dispositivoId: number, fechaInicio?: Date, fechaFin?: Date): Promise<RegistroPing[]> {
+    let url = `${API_URL}/registros/${dispositivoId}`;
+    if (fechaInicio && fechaFin) {
+      url += `?inicio=${fechaInicio.toISOString()}&fin=${fechaFin.toISOString()}`;
+    }
+    const response = await fetch(url);
     const data = await response.json();
     return data.map(this.mapearRegistroPing);
+  }
+
+  async getUltimoPing(dispositivoId: number): Promise<RegistroPing | undefined> {
+    const registros = await this.getRegistrosPing(dispositivoId);
+    return registros[0];
+  }
+
+  async getUltimaCaida(dispositivoId: number): Promise<RegistroPing | undefined> {
+    const response = await fetch(`${API_URL}/registros/${dispositivoId}/ultima-caida`);
+    if (!response.ok) return undefined;
+    const data = await response.json();
+    return this.mapearRegistroPing(data);
   }
 
   async addRegistroPing(registro: RegistroPing): Promise<number> {
