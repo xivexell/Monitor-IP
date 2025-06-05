@@ -15,11 +15,11 @@ export class MonitorService {
     
     try {
       // Obtener todos los dispositivos y filtrar los activos en memoria
-      const allDispositivos = await db.dispositivos.toArray();
-      const dispositivos = allDispositivos.filter(d => d.activo === true);
+      const dispositivos = await db.getDispositivos();
+      const dispositivosActivos = dispositivos.filter(d => d.activo === true);
       
       // Iniciar monitoreo para cada dispositivo
-      dispositivos.forEach(dispositivo => {
+      dispositivosActivos.forEach(dispositivo => {
         this.iniciarMonitoreoDispositivo(dispositivo);
       });
       
@@ -62,7 +62,7 @@ export class MonitorService {
         const timestamp = new Date();
         
         // Guardar resultado en la base de datos
-        await db.registrosPing.add({
+        await db.addRegistroPing({
           dispositivoId: dispositivo.id,
           timestamp,
           latencia: resultado.latencia,
@@ -82,12 +82,7 @@ export class MonitorService {
             );
           } else {
             // Dispositivo recuperado
-            const ultimaCaida = await db.registrosPing
-              .where('dispositivoId')
-              .equals(dispositivo.id)
-              .and(r => !r.activo)
-              .reverse()
-              .first();
+            const ultimaCaida = await db.getUltimaCaida(dispositivo.id);
 
             if (ultimaCaida) {
               const tiempoCaido = timestamp.getTime() - new Date(ultimaCaida.timestamp).getTime();
@@ -136,18 +131,14 @@ export class MonitorService {
 
   // Obtener el último estado de todos los dispositivos
   async obtenerEstadoActual() {
-    const dispositivos = await db.dispositivos.toArray();
+    const dispositivos = await db.getDispositivos();
     const resultado: {[key: number]: {dispositivo: Dispositivo, ultimoPing?: RegistroPing}} = {};
     
     for (const dispositivo of dispositivos) {
       if (!dispositivo.id) continue;
       
       // Obtener el último registro de ping para este dispositivo
-      const ultimoPing = await db.registrosPing
-        .where('dispositivoId')
-        .equals(dispositivo.id)
-        .reverse()
-        .first();
+      const ultimoPing = await db.getUltimoPing(dispositivo.id);
       
       resultado[dispositivo.id] = {
         dispositivo,

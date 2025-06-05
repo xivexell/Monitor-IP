@@ -35,10 +35,10 @@ export class ReporteService {
       // Obtener dispositivos (uno específico o todos)
       let dispositivos: Dispositivo[];
       if (dispositivoId) {
-        const dispositivo = await db.dispositivos.get(dispositivoId);
+        const dispositivo = await db.getDispositivo(dispositivoId);
         dispositivos = dispositivo ? [dispositivo] : [];
       } else {
-        dispositivos = await db.dispositivos.toArray();
+        dispositivos = await db.getDispositivos();
       }
       
       // Para cada dispositivo, generar su reporte
@@ -46,14 +46,7 @@ export class ReporteService {
         if (!dispositivo.id) continue;
         
         // Obtener registros de ping para el rango de fechas
-        const registros = await db.registrosPing
-          .where('dispositivoId')
-          .equals(dispositivo.id)
-          .and(registro => {
-            const timestamp = new Date(registro.timestamp);
-            return timestamp >= fechaInicio && timestamp <= fechaFin;
-          })
-          .toArray();
+        const registros = await db.getRegistrosPing(dispositivo.id, fechaInicio, fechaFin);
         
         // Calcular estadísticas
         const totalPings = registros.length;
@@ -267,7 +260,7 @@ export class ReporteService {
       const fechaInicio = new Date();
       fechaInicio.setHours(fechaInicio.getHours() - 24);
       
-      const dispositivos = await db.dispositivos.toArray();
+      const dispositivos = await db.getDispositivos();
       const totalDispositivos = dispositivos.length;
       
       // Obtener estado actual
@@ -279,11 +272,7 @@ export class ReporteService {
         if (!dispositivo.id) continue;
         
         // Último registro de ping
-        const ultimoPing = await db.registrosPing
-          .where('dispositivoId')
-          .equals(dispositivo.id)
-          .reverse()
-          .first();
+        const ultimoPing = await db.getUltimoPing(dispositivo.id);
         
         if (ultimoPing) {
           if (ultimoPing.activo) {

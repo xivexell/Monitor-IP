@@ -7,9 +7,9 @@ export function useConfiguracion() {
   // Cargar configuración
   const cargarConfiguracion = useCallback(async () => {
     try {
-      const config = await db.configuracion.toArray();
-      if (config.length > 0) {
-        setConfiguracion(config[0]);
+      const config = await db.getConfiguracion();
+      if (config) {
+        setConfiguracion(config);
       }
     } catch (error) {
       console.error('Error al cargar configuración:', error);
@@ -20,7 +20,7 @@ export function useConfiguracion() {
   const actualizarConfiguracion = useCallback(async (nuevaConfig: Partial<ConfiguracionApp>) => {
     try {
       if (configuracion?.id) {
-        await db.configuracion.update(configuracion.id, {
+        await db.updateConfiguracion(configuracion.id, {
           ...configuracion,
           ...nuevaConfig
         });
